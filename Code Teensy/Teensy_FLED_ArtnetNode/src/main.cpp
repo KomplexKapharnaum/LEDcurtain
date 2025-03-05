@@ -86,8 +86,10 @@ const int startUniverse = 0;
 // every device, the IP will be different. Make sure to update when changing
 // devices or environments
 
-byte ip[] = {2, 12, 0, 2}; // IP address of the node (254 is default, will be
+byte ip[] = {2, 0, 12, 2}; // IP address of the node (254 is default, will be
 // overwritten by ID_ETENDARD read from EEPROM)
+byte gateway[] = {2, 0, 0, 1};
+byte subnet[] = {255, 0, 0, 0};
 
 
 // Etendard V0.1 (GRAZ)
@@ -312,7 +314,7 @@ void setup() {
     Ethernet.setSubnetMask({255, 255, 0, 0});
     if (DEBUG)
       Serial.printf("IP = %d.%d.%d.%0d\n", ip[0], ip[1], ip[2], ip[3]);
-    artnet.begin(mac, ip);
+    artnet.begin(mac, ip, gateway, subnet);
     if (DEBUG)
       Serial.println("artnet.begin");
   } else if (DEBUG)

@@ -102,6 +102,7 @@ class Artnet
 public:
   Artnet();
 
+  void begin(byte mac[], byte ip[], byte gateway[], byte subnet[]);
   void begin(byte mac[], byte ip[]);
   void begin();
   void setBroadcast(byte bc[]);

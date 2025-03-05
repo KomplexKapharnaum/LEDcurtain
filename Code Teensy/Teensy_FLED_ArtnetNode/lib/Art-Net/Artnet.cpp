@@ -26,6 +26,14 @@ THE SOFTWARE.
 
 Artnet::Artnet() {}
 
+void Artnet::begin(byte mac[], byte ip[], byte gateway[], byte subnet[])
+{
+#if !defined(ARDUINO_SAMD_ZERO) && !defined(ESP8266) && !defined(ESP32)
+  Ethernet.begin(mac, ip, gateway, gateway, subnet);
+#endif
+  Udp.begin(ART_NET_PORT);
+}
+
 void Artnet::begin(byte mac[], byte ip[])
 {
 #if !defined(ARDUINO_SAMD_ZERO) && !defined(ESP8266) && !defined(ESP32)
