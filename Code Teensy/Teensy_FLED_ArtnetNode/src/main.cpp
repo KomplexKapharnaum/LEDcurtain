@@ -13,6 +13,28 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+
+
+/*
+ETENDARD V0.1 (GRAZ) not used
+- 2 strips of 108 LEDs per pin in 18 output pins
+- 36 strips of 108 LEDs
+
+ETENDARD V1.a (KXKM) with shutdown pin
+- 2 strips of 138 LEDs per pin in 18 output pins
+- 36 strips of 108 LEDs
+
+ETENDARD V2.a (KXKM) with shutdown pin
+- 1 strip of 138 LEDs per pin in 36 output pins
+- 36 strips of 108 LEDs
+
+ETENDARD V rasta with shutdown pin
+- 1 strip of 138 LEDs per pin in 38 output pins
+- 38 strips of 138 LEDs
+MAC: 04:e9:e5:19:26:75
+IP = 2.0.12.10
+
+*/
 /**
  * @file main.cpp
  * @brief Point d'entrée principal du programme.
@@ -42,8 +64,7 @@
 // Turn on / off Serial logs for debugging
 #define DEBUG 1
 
-// define the number of ID_ETENDARD to set IP address
-const int ID_ETENDARD = 2;
+
 
 // Set to 1 to enable Artnet
 // Set to 0 to disable Artnet and run a test pattern
@@ -52,12 +73,12 @@ const int ID_ETENDARD = 2;
 // Set time to wait for economy mode when no artnet data is received
 #define ECONOMY_MODE 3000
 unsigned long previousMillis = 0;
+bool Led_ONOFF = 0;
 // To help with longevity of LEDs and Board
 // Brightness is set to ~50% (0-255)
 
 // 50% = 30A in full white
 #define BRIGHTNESS 150
-
 
 /*
  COLOR_CORRECTION
@@ -86,11 +107,12 @@ const int startUniverse = 0;
 // every device, the IP will be different. Make sure to update when changing
 // devices or environments
 
-byte ip[] = {2, 0, 12, 2}; // IP address of the node (254 is default, will be
+byte ip[] = {2, 0, 12, 100}; // IP address of the node (254 is default, will be
 // overwritten by ID_ETENDARD read from EEPROM)
 byte gateway[] = {2, 0, 0, 1};
 byte subnet[] = {255, 0, 0, 0};
 
+// define the number of ID_ETENDARD to set IP address
 
 // Etendard V0.1 (GRAZ)
 #if V_ETENDARD == 0
@@ -104,6 +126,7 @@ const int Nb_string_strip = 2;           // Number of strips per pin
 
 // Etendard V1.a (KXKM)
 #if V_ETENDARD == 1
+const int ID_ETENDARD = 1; // 1 for IP address
 const int numPins = 18; // Number of pins used for LED output = 32
 const byte pinList[numPins] = {
     33, 32, 31, 30, 29, 28, 27, 26, 25,
@@ -115,6 +138,7 @@ const int Nb_string_strip = 2;          // Number of strips per pin
 // Etendard V2.a (KXKM) version with 1 strip of 138 LEDs per pin in 36 output
 // pins
 #if V_ETENDARD == 2
+const int ID_ETENDARD = 2; // 2 to 9 for IP address
 const int numPins = 36;
 const byte pinList[numPins] = {1,  2,  3,  4,  19, 20, 21, 22, 5,  6,
                                7,  8,  9,  10, 11, 12, 24, 25, 26, 27,
@@ -123,6 +147,21 @@ const byte pinList[numPins] = {1,  2,  3,  4,  19, 20, 21, 22, 5,  6,
                                                         // LED output
 const int Led_for_one_strip = 108; // Number of LEDs per strip
 const int Nb_string_strip = 1;     // Number of strips per pin
+#endif
+
+// Etendard V rasta 1 strip of 138 LEDs per pin in 38 output
+// pins
+#if V_ETENDARD == 3
+const int ID_ETENDARD = 10; // 10 for IP address
+const int numPins = 38;
+const byte pinList[numPins] = {
+    1,  2,  3,  4,  19, 20, 21, 22, 5,  6,  7,  8,  9,
+    10, 11, 12, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33,
+    34, 35, 36, 37, 38, 39, 40, 41, 13, 14, 15, 16}; // List of pins used for
+                                                     // LED output
+const int Led_for_one_strip =
+    138; // Number of LEDs per strip (138 dread led, etendar 108)
+const int Nb_string_strip = 1; // Number of strips per pin
 #endif
 
 const int ledsPerStrip = Led_for_one_strip * Nb_string_strip;
@@ -261,8 +300,8 @@ void onDmxFrame_full(uint16_t universe, uint16_t length, uint8_t sequence,
     // Reset universeReceived to 0
     memset(universesReceived, 0, maxUniverses);
     previousDataLength = 0;
-  }
-  // else if (DEBUG) Serial.println("\t NOT DRAW LEDs ");
+  } // else if (DEBUG)
+    // Serial.println("\t NOT DRAW LEDs ");
 }
 
 /**
@@ -282,7 +321,7 @@ void setup() {
   // TODO set the timing for the LED strip
   dispLeds.begin(1250, 300, 600,
                  // TODO check and set the reset timing for the LED strip
-                 80); // Utiliser ObjectFLED au lieu de OctoWS2811
+                 100); // Utiliser ObjectFLED au lieu de OctoWS2811
 
   if (DEBUG)
     Serial.println("dispLeds.begin");
@@ -342,6 +381,12 @@ void loop() {
     delay(1000);
     initTest();
   }
-  if (millis() - previousMillis > ECONOMY_MODE)
+  if (millis() - previousMillis > ECONOMY_MODE) {
     digitalWrite(23, LOW);
+    if (DEBUG && Led_ONOFF == 1) {
+      Serial.println("Shutdown STRIP LED");
+      Led_ONOFF = 0;
+    }
+  } else
+    Led_ONOFF = 1;
 }
