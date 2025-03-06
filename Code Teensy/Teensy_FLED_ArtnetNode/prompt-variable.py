@@ -4,8 +4,8 @@ def prompt_for_variable(target, source, env):
     value = input("Entrez la valeur pour ID_ETENDARD : ")
     env.Append(CPPDEFINES=[("ID_ETENDARD", env.StringifyMacro(value))])
 
-env.AddPreAction("buildprog", prompt_for_variable)
-
+env.AddPreAction("program", prompt_for_variable)
+#env.AddPostAction("$BUILD_DIR/src/main.cpp.o", prompt_for_variable)
 # from SCons.Script import Import
 # 
 # Import("env")
