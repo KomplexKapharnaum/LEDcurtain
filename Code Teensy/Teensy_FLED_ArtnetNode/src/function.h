@@ -1,7 +1,7 @@
 // Blink some lights from setup(), to confirm upload
 void initTest() {
   const int delaytime = 200;
-
+  digitalWrite(23, 1);
   for (int i = 0; i < numLeds; i++)
     rgbarray[i] = CRGB::Red;
   dispLeds.show();
@@ -103,16 +103,10 @@ void teensyMAC(uint8_t *mac) // recover mac address from teensy
 }
 
 void eeprom_set_IP(int ID_ETENDARD) {
-  // Rewrite nodeID
-  if (EEPROM.read(10) != ID_ETENDARD) {
-    EEPROM.write(10, ID_ETENDARD);
-    delay(200);
-  }
-
   if (EEPROM.read(10) == 0 || EEPROM.read(10) >= 255) {
     if (DEBUG)
-      Serial.println("EEPROM not set.. using default id: 2");
-    EEPROM.write(10, 2);
+      Serial.println("EEPROM not set.. using default id: 100");
+    EEPROM.write(10, 100);
   }
   delay(500);
   if (DEBUG)
@@ -168,6 +162,6 @@ uint8_t white_from_rgb(uint8_t &r, uint8_t &g, uint8_t &b) {
   return w;
 }
 
-// not used in this version because we use ObjectFLED and setpentin is managed by the library
+// not used in this version because we use ObjectFLED whith setpentin are managed by the library
 int flip = 0;
 bool onoff() { return (flip / 15) % 2 == 0; }

@@ -13,8 +13,6 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-
-
 /*
 ETENDARD V0.1 (GRAZ) not used
 - 2 strips of 108 LEDs per pin in 18 output pins
@@ -63,8 +61,8 @@ IP = 2.0.12.10
 
 // Turn on / off Serial logs for debugging
 #define DEBUG 1
-
-
+const int ID_ETENDARD = 10; // 1 for IP address
+//#define WRITE_ID
 
 // Set to 1 to enable Artnet
 // Set to 0 to disable Artnet and run a test pattern
@@ -73,7 +71,7 @@ IP = 2.0.12.10
 // Set time to wait for economy mode when no artnet data is received
 #define ECONOMY_MODE 3000
 unsigned long previousMillis = 0;
-bool Led_ONOFF = 0;
+bool Led_Pwr_State = 0;
 // To help with longevity of LEDs and Board
 // Brightness is set to ~50% (0-255)
 
@@ -95,7 +93,7 @@ bool Led_ONOFF = 0;
 
 // Throttling refresh for when using 24+ universes
 // i.e. 510 leds / 3 universes per pin
-#define FRAMES_PER_SECOND 30
+#define FRAMES_PER_SECOND 300
 
 // CHANGE FOR YOUR SETUP most software this is 1, some software send out artnet
 // first universe as 0.
@@ -118,15 +116,17 @@ byte subnet[] = {255, 0, 0, 0};
 #if V_ETENDARD == 0
 const int numPins = 18; // Number of pins used for LED output = 32
 const byte pinList[numPins] = {
-    30, 29, 28, 27, 26, 25, 24, 12, 11,
-    31, 32, 33, 34, 35, 36, 37, 38, 39}; // List of pins used for LED output
-const int Led_for_one_strip = 108;       // Number of LEDs per strip
-const int Nb_string_strip = 2;           // Number of strips per pin
+    1,   2,  3,  4,  19, 20, 21, 22,
+    24, 25, 26, 27,  28, 29, 30, 31,
+    32, 34,}; // List of pins used for LED output
+                                     // PIN 25 HS ?
+const int Led_for_one_strip = 108;   // Number of LEDs per strip
+const int Nb_string_strip = 2;       // Number of strips per pin
 #endif
 
 // Etendard V1.a (KXKM)
 #if V_ETENDARD == 1
-const int ID_ETENDARD = 1; // 1 for IP address
+// const int ID_ETENDARD = 1; // 1 for IP address
 const int numPins = 18; // Number of pins used for LED output = 32
 const byte pinList[numPins] = {
     33, 32, 31, 30, 29, 28, 27, 26, 25,
@@ -138,12 +138,13 @@ const int Nb_string_strip = 2;          // Number of strips per pin
 // Etendard V2.a (KXKM) version with 1 strip of 138 LEDs per pin in 36 output
 // pins
 #if V_ETENDARD == 2
-const int ID_ETENDARD = 2; // 2 to 9 for IP address
+// const int ID_ETENDARD = 3; // 2 to 9 for IP address
 const int numPins = 36;
-const byte pinList[numPins] = {1,  2,  3,  4,  19, 20, 21, 22, 5,  6,
-                               7,  8,  9,  10, 11, 12, 24, 25, 26, 27,
-                               28, 29, 30, 31, 32, 33, 34, 35, 36, 37,
-                               38, 39, 40, 41, 13, 14}; // List of pins used for
+const byte pinList[numPins] = {1,  2,  3,  4,  19, 20, 21, 22,
+                               5,  6,  7,  8,   9, 10, 11, 12,
+                              24, 25, 26, 27,  28, 29, 30, 31,
+                              32, 33, 34, 35, 36, 37,  38, 39,
+                              40, 41, 13, 14}; // List of pins used for
                                                         // LED output
 const int Led_for_one_strip = 108; // Number of LEDs per strip
 const int Nb_string_strip = 1;     // Number of strips per pin
@@ -152,7 +153,7 @@ const int Nb_string_strip = 1;     // Number of strips per pin
 // Etendard V rasta 1 strip of 138 LEDs per pin in 38 output
 // pins
 #if V_ETENDARD == 3
-const int ID_ETENDARD = 10; // 10 for IP address
+// const int ID_ETENDARD = 10; // 10 for IP address
 const int numPins = 38;
 const byte pinList[numPins] = {
     1,  2,  3,  4,  19, 20, 21, 22, 5,  6,  7,  8,  9,
@@ -286,29 +287,38 @@ void onDmxFrame_full(uint16_t universe, uint16_t length, uint8_t sequence,
   }
 
   previousDataLength = length;
-  // set the LED on if the data is not 0
-  if (data[0] != 0) {
-    digitalWrite(23, HIGH);
-    previousMillis = millis();
-  }
   if (sendFrame) {
-    if (DEBUG)
-      Serial.println("\t DRAW LEDs");
-    dispLeds.show();
-    flip += 1;
+    previousMillis = millis();
+    if (Led_Pwr_State == 0) { 
+      Led_Pwr_State = 1; // Turn on the LED strip
+      digitalWrite(23, Led_Pwr_State);
+      if (DEBUG) {
+        Serial.println("=====> LED ON");
+        Serial.println("\t DRAW LEDs");
+        artnet.printPacketHeader();
+        artnet.printPacketContent();
+      }
+    }
+    dispLeds.show(); // Send the data to the strip
+    flip += 1; 
 
     // Reset universeReceived to 0
     memset(universesReceived, 0, maxUniverses);
     previousDataLength = 0;
-  } // else if (DEBUG)
-    // Serial.println("\t NOT DRAW LEDs ");
+  } 
 }
 
 /**
  * @brief Fonction d'initialisation du programme.
  */
 void setup() {
-
+  #ifdef WRITE_ID
+  // Rewrite nodeID
+  if (EEPROM.read(10) != ID_ETENDARD) {
+    EEPROM.write(10, ID_ETENDARD);
+    delay(200);
+  }
+#endif
   eeprom_set_IP(ID_ETENDARD);
   if (DEBUG) {
     Serial.begin(115200);
@@ -319,9 +329,9 @@ void setup() {
   // begin(LED_CLK_nS, LED_T0H_nS, LED_T1H_nS, LED_Latch_Delay_uS) - specifies
   // full LED waveform timing.
   // TODO set the timing for the LED strip
-  dispLeds.begin(1250, 300, 600,
+  dispLeds.begin(1250, 350, 700,
                  // TODO check and set the reset timing for the LED strip
-                 100); // Utiliser ObjectFLED au lieu de OctoWS2811
+                 50); // Utiliser ObjectFLED au lieu de OctoWS2811
 
   if (DEBUG)
     Serial.println("dispLeds.begin");
@@ -347,6 +357,9 @@ void setup() {
     Serial.println("________________END INIT TEST_________________");
   dispLeds.setBrightness(BRIGHTNESS);
 
+  if (DEBUG) {
+    Serial.println("Starting Ethernet and Artnet setup...");
+  }
   if (artnet_set == 1) {
     uint8_t mac[6];
     teensyMAC(mac);
@@ -355,12 +368,11 @@ void setup() {
       Serial.printf("IP = %d.%d.%d.%0d\n", ip[0], ip[1], ip[2], ip[3]);
     artnet.begin(mac, ip, gateway, subnet);
     if (DEBUG)
-      Serial.println("artnet.begin");
+      Serial.println("artnet.begin completed");
   } else if (DEBUG)
     Serial.println("Artnet not set");
 
   // this will be called for each packet received
-
   artnet.setArtDmxCallback(onDmxFrame_full);
 
   if (DEBUG)
@@ -378,15 +390,19 @@ void loop() {
   if (artnet_set == 1) {
     artnet.read();
   } else {
-    delay(1000);
+    delay(100);
     initTest();
   }
-  if (millis() - previousMillis > ECONOMY_MODE) {
-    digitalWrite(23, LOW);
-    if (DEBUG && Led_ONOFF == 1) {
+  if (millis() - previousMillis > ECONOMY_MODE && Led_Pwr_State == 1) {
+    Led_Pwr_State = 0; // Turn off the LED strip
+    digitalWrite(23, Led_Pwr_State);
+    if (DEBUG) {
       Serial.println("Shutdown STRIP LED");
-      Led_ONOFF = 0;
     }
-  } else
-    Led_ONOFF = 1;
+  } 
+  /*
+  else if (Led_Pwr_State == 0) {
+    Led_Pwr_State = 1;
+  }
+    */
 }

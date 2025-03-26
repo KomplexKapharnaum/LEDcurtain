@@ -28,23 +28,29 @@ Artnet::Artnet() {}
 
 void Artnet::begin(byte mac[], byte ip[], byte gateway[], byte subnet[])
 {
+  debugPrint("Initializing Ethernet with IP, Gateway, and Subnet...");
 #if !defined(ARDUINO_SAMD_ZERO) && !defined(ESP8266) && !defined(ESP32)
   Ethernet.begin(mac, ip, gateway, gateway, subnet);
 #endif
   Udp.begin(ART_NET_PORT);
+  debugPrint("Ethernet initialized.");
 }
 
 void Artnet::begin(byte mac[], byte ip[])
 {
+  debugPrint("Initializing Ethernet with IP...");
 #if !defined(ARDUINO_SAMD_ZERO) && !defined(ESP8266) && !defined(ESP32)
   Ethernet.begin(mac, ip);
 #endif
   Udp.begin(ART_NET_PORT);
+  debugPrint("Ethernet initialized.");
 }
 
 void Artnet::begin()
 {
+  debugPrint("Initializing UDP...");
   Udp.begin(ART_NET_PORT);
+  debugPrint("UDP initialized.");
 }
 
 void Artnet::setBroadcast(byte bc[])
@@ -56,7 +62,6 @@ void Artnet::setBroadcast(byte bc[])
 uint16_t Artnet::read()
 {
   packetSize = Udp.parsePacket();
-
   remoteIP = Udp.remoteIP();
   if (packetSize <= MAX_BUFFER_ARTNET && packetSize > 0)
   {
@@ -191,4 +196,9 @@ void Artnet::printPacketContent()
     Serial.print("  ");
   }
   Serial.println('\n');
+}
+
+void Artnet::debugPrint(const char* message)
+{
+    Serial.println(message);
 }

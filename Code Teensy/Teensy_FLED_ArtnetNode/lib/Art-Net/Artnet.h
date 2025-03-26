@@ -171,6 +171,7 @@ private:
   IPAddress remoteIP;
   void (*artDmxCallback)(uint16_t universe, uint16_t length, uint8_t sequence, uint8_t *data, IPAddress remoteIP);
   void (*artSyncCallback)(IPAddress remoteIP);
+  void debugPrint(const char* message);
 };
 
 #endif
