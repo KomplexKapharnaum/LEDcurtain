@@ -280,13 +280,15 @@ void onDmxFrame_full(uint16_t universe, uint16_t length, uint8_t sequence,
 
   // Read universe and put into the right part of the display buffer
   for (int i = 0; i < length / 3; i++) {
-    int led = i + (universe - startUniverse) * (previousDataLength / 3);
+    // int led = i + (universe - startUniverse) * (previousDataLength / 3);
+    int led = i + (universe - startUniverse) * (512 / 3);
     if (led < numLeds) {
       rgbarray[led] = CRGB(data[i * 3], data[i * 3 + 1], data[i * 3 + 2]);
     }
   }
 
   previousDataLength = length;
+  
   if (sendFrame) {
     previousMillis = millis();
     if (Led_Pwr_State == 0) { 
